@@ -17,21 +17,30 @@ import java.util.*;
 // Group members: Razia Jafari, Yining Liang, Alessio Antobio
 
 // How many partitions can the topics "temperature" and "humidity" have?
+// temperature and humidity must have the same number P of partitions.
+// Minimum: 1 each. Maximum: no finite maximum specified by the assignment.
 
 // Is there any relation between the number of partitions in "temperature" and "humidity"?
-
+// Matching P keeps a room's temperature and humidity records assigned
+// to the same Monitor instance
 // Is it possible to have more than one instance of Monitor?
-// If so, what is the relation between their group id?
+// Monitor instances: minimum 1; maximum P active instances.
 
+// If so, what is the relation between their group id?
+// All Monitor instances use the same consumer group ID.
 // How many partitions can the topic "alerts" have?
-
+// alerts: minimum 1 partition; no finite maximum specified.
 // Is it possible to have more than one instance of Reactor?
+// Reactor instances: minimum 1; maximum A active instances.
 // If so, what is the relation between their group id?
-
+// All Reactor instances use the same consumer group ID.
+// The Reactor group ID must differ from the Monitor group ID.
 // How many partitions can the topic "processedAlerts" have?
-
+// processedAlerts: minimum 1 partition; no finite maximum specified.
+// Using A partitions, the same number as alerts, is a simple choice.
 // Which additional topics, if any, do you use? How many partitions can they have?
-
+// Additional topic: reactorProgress has 1 compacted partition
+// in this solution; it stores each alert's completed reaction stage.
 public class ConsumersXX {
     public static void main(String[] args) {
         String serverAddr = "localhost:9092";
