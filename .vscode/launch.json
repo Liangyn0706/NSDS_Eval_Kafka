@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Producer (Kafka locale)",
+      "request": "launch",
+      "mainClass": "it.polimi.nsds.kafka.eval.Producer",
+      "preLaunchTask": "Kafka: start"
+    },
+    {
+      "type": "java",
+      "name": "Monitor (stage 1)",
+      "request": "launch",
+      "mainClass": "it.polimi.nsds.kafka.eval.ConsumersXX",
+      "args": "1 monitor-local",
+      "preLaunchTask": "Kafka: start"
+    },
+    {
+      "type": "java",
+      "name": "Reactor (stage 2)",
+      "request": "launch",
+      "mainClass": "it.polimi.nsds.kafka.eval.ConsumersXX",
+      "args": "2 reactor-local",
+      "preLaunchTask": "Kafka: start"
+    }
+  ]
+}
+

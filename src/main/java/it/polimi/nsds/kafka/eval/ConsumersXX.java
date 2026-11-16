@@ -50,12 +50,14 @@ public class ConsumersXX {
         }
     }
 
-    // Simulates the first reaction of the system to an alert (provided, do not modify)
+    // Simulates the first reaction of the system to an alert (provided, do not
+    // modify)
     private static void reaction1(String room, String alert) {
         System.out.println("[reaction1] room=" + room + " " + alert);
     }
 
-    // Simulates the second reaction of the system to an alert (provided, do not modify)
+    // Simulates the second reaction of the system to an alert (provided, do not
+    // modify)
     private static void reaction2(String room, String alert) {
         System.out.println("[reaction2] room=" + room + " " + alert);
     }
@@ -150,20 +152,20 @@ public class ConsumersXX {
         }
     }
 
-    private static class Reactor {
-        private final String serverAddr;
-        private final String consumerGroupId;
+        private static class Reactor {
+            private final String serverAddr;
+            private final String consumerGroupId;
 
-        private static final String inputTopic = "alerts";
-        private static final String outputTopic = "processedAlerts";
+            private static final String inputTopic = "alerts";
+            private static final String outputTopic = "processedAlerts";
 
-        // TODO: add attributes if needed
+            // TODO: add attributes if needed
 
-        // TODO: add arguments if necessary
-        public Reactor(String serverAddr, String consumerGroupId) {
-            this.serverAddr = serverAddr;
-            this.consumerGroupId = consumerGroupId;
-        }
+            // TODO: add arguments if necessary
+            public Reactor(String serverAddr, String consumerGroupId) {
+                this.serverAddr = serverAddr;
+                this.consumerGroupId = consumerGroupId;
+            }
 
         public void execute() {
             // Consumer
@@ -174,9 +176,12 @@ public class ConsumersXX {
             consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
             consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
 
-            // TODO: add properties if needed
+            // disable the auto commit of offset
+            consumerProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, String.valueOf(false));
 
             KafkaConsumer<String, String> consumer = new KafkaConsumer<>(consumerProps);
+            // subscribe to "Alerts" and "ProcessAlert"
+            consumer.subscribe(Arrays.asList(inputTopic, outputTopic));
 
             // Producer
             final Properties producerProps = new Properties();
@@ -188,10 +193,25 @@ public class ConsumersXX {
 
             final KafkaProducer<String, String> producer = new KafkaProducer<>(producerProps);
 
-            // TODO: implement the processing logic
+            
+
             while (true) {
-                // TODO: implement the processing logic
+                consumer.poll(Duration.of(5, ChronoUnit.MINUTES))
+
+                for (ConsumerRecord<String, String> record : records) {
+                    final String topic = record.topic();
+                    final String key = record.key();
+                    final String value = record.value();
+
+                    if (topic.equals(inputTopic)) {
+
+                    } else if (topic.equals(outputTopic)) {
+
+                    }
             }
+            
+            // repeat at least ones
+            consumer.commitSync();
         }
     }
 }

@@ -1,0 +1,28 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Kafka: test Producer",
+      "type": "process",
+      "command": "bash",
+      "args": ["${workspaceFolder}/scripts/test-kafka.sh"],
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "Kafka: start",
+      "type": "process",
+      "command": "bash",
+      "args": ["${workspaceFolder}/scripts/kafka-local.sh", "start"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Kafka: stop",
+      "type": "process",
+      "command": "bash",
+      "args": ["${workspaceFolder}/scripts/kafka-local.sh", "stop"],
+      "problemMatcher": []
+    }
+  ]
+}
+

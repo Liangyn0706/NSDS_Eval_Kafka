@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Monitor (stage 1)" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="it.polimi.nsds.kafka.eval.ConsumersXX" />
+    <option name="PROGRAM_PARAMETERS" value="1 monitor-local" />
+    <module name="kafka-eval-2026" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+      <option name="RunConfigurationTask" enabled="true" run_configuration_name="Kafka locale" run_configuration_type="ShConfigurationType" />
+    </method>
+  </configuration>
+</component>
