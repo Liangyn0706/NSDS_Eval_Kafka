@@ -3,10 +3,14 @@ package it.polimi.nsds.kafka.eval;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.IntegerDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 // Group number:
@@ -86,23 +90,62 @@ public class ConsumersXX {
             consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, IntegerDeserializer.class.getName());
             consumerProps.put(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG, RangeAssignor.class.getName());
 
-            // TODO: add properties if needed
+            consumerProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, String.valueOf(false));
 
             KafkaConsumer<String, Integer> consumer = new KafkaConsumer<>(consumerProps);
+            consumer.subscribe(Arrays.asList(temperaturesTopic, humiditiesTopic));
 
             // Producer
             final Properties producerProps = new Properties();
             producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, serverAddr);
             producerProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
             producerProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-
-            // TODO: add properties if needed
+            producerProps.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG, transactionId);
+            producerProps.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, String.valueOf(true));
 
             final KafkaProducer<String, String> producer = new KafkaProducer<>(producerProps);
+            producer.initTransactions();
 
-            // TODO: implement the processing logic
+            final List<ConsumerRecord<String, Integer>> TemperatureWindow = new ArrayList<>(windowSize);
+            final List<ConsumerRecord<String, Integer>> HumidityWindow = new ArrayList<>(windowSize);
+
             while (true) {
-                // TODO: implement the processing logic
+                final ConsumerRecords<String, Integer> records = consumer.poll(Duration.of(5, ChronoUnit.MINUTES));
+                for (final ConsumerRecord<String, Integer> record : records) {
+                    final String topic = record.topic();
+                    final String key = record.key();
+                    final Integer value = record.value();
+                    System.out.println("Received key: " + key + " value: " + value + " from topic: " + topic);
+                    if (topic.equals(temperaturesTopic)) {
+                        TemperatureWindow.add(record);
+                        if (TemperatureWindow.size() >= windowSize) {
+                            System.out.println("Temperatures are full");
+                            int[] tempValues = new int[windowSize];
+                            for(int i = 0; i < TemperatureWindow.size(); i++) {
+                                tempValues[i] = TemperatureWindow.get(i).value();
+                            }
+                            double avgTemp = Arrays.stream(tempValues).average().orElse(0.0);
+                            if (avgTemp > temperatureThreshold) {
+                                System.out.println("Temperature threshold exceeded: " + avgTemp);
+                                // Send alert to output topic
+                                producer.beginTransaction();
+
+                                final Map<TopicPartition, OffsetAndMetadata> map = new HashMap<>();
+                                for (final ConsumerRecord<String, Integer> winRecord : TemperatureWindow) {
+                                    map.put(new TopicPartition(winRecord.topic(), winRecord.partition()), new OffsetAndMetadata(winRecord.offset() + 1));
+                                }
+                                producer.send(new ProducerRecord<>(outputTopic, key, "Temperature alert: " + avg
+                            }
+
+
+                        }
+                    } else if (topic.equals(humiditiesTopic)) {
+                        HumidityWindow.add(record);
+                        if (HumidityWindow.size() >= windowSize) {
+                            System.out.println("Humidities are full");
+                            HumidityWindow.add(record);
+                        }
+                    }
             }
         }
     }
