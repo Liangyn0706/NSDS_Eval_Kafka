@@ -92,8 +92,6 @@ public class ConsumersXX {
             consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, IntegerDeserializer.class.getName());
             consumerProps.put(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG, RangeAssignor.class.getName());
 
-            consumerProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, String.valueOf(false));
-
             KafkaConsumer<String, Integer> consumer = new KafkaConsumer<>(consumerProps);
             consumer.subscribe(Arrays.asList(temperaturesTopic, humiditiesTopic));
 
@@ -102,11 +100,8 @@ public class ConsumersXX {
             producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, serverAddr);
             producerProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
             producerProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-            producerProps.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG, transactionId);
-            producerProps.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, String.valueOf(true));
 
             final KafkaProducer<String, String> producer = new KafkaProducer<>(producerProps);
-            producer.initTransactions();
 
             final List<ConsumerRecord<String, Integer>> TemperatureWindow = new ArrayList<>(windowSize);
             final List<ConsumerRecord<String, Integer>> HumidityWindow = new ArrayList<>(windowSize);
@@ -123,31 +118,42 @@ public class ConsumersXX {
                         if (TemperatureWindow.size() >= windowSize) {
                             System.out.println("Temperatures are full");
                             int[] tempValues = new int[windowSize];
-                            for(int i = 0; i < TemperatureWindow.size(); i++) {
+                            for (int i = 0; i < TemperatureWindow.size(); i++) {
                                 tempValues[i] = TemperatureWindow.get(i).value();
                             }
                             double avgTemp = Arrays.stream(tempValues).average().orElse(0.0);
                             if (avgTemp > temperatureThreshold) {
                                 System.out.println("Temperature threshold exceeded: " + avgTemp);
                                 // Send alert to output topic
-                                producer.beginTransaction();
-
-                                final Map<TopicPartition, OffsetAndMetadata> map = new HashMap<>();
-                                for (final ConsumerRecord<String, Integer> winRecord : TemperatureWindow) {
-                                    map.put(new TopicPartition(winRecord.topic(), winRecord.partition()), new OffsetAndMetadata(winRecord.offset() + 1));
-                                }
-                                producer.send(new ProducerRecord<>(outputTopic, key, "Temperature alert: " + avg
+                                producer.send(new ProducerRecord<>(outputTopic, key, "Temperature alert: " + avgTemp));
                             }
 
-
-                        }
-                    } else if (topic.equals(humiditiesTopic)) {
-                        HumidityWindow.add(record);
-                        if (HumidityWindow.size() >= windowSize) {
-                            System.out.println("Humidities are full");
+                            TemperatureWindow.clear();
+                            producer.flush();
+                            consumer.commitSync();
+                        } else if (topic.equals(humiditiesTopic)) {
                             HumidityWindow.add(record);
+                            if (HumidityWindow.size() >= windowSize) {
+                                System.out.println("Humidities are full");
+                                HumidityWindow.add(record);
+                                int[] humValues = new int[windowSize];
+                                for (int i = 0; i < HumidityWindow.size(); i++) {
+                                    humValues[i] = HumidityWindow.get(i).value();
+                                }
+                                double avgHum = Arrays.stream(humValues).average().orElse(0.0);
+                                if (avgHum < humidityThreshold) {
+                                    System.out.println("Humidity threshold exceeded: " + avgHum);
+                                    // Send alert to output topic
+                                    producer.send(new ProducerRecord<>(outputTopic, key, "Humidity alert: " + avgHum));
+                                }
+
+                                HumidityWindow.clear();
+                                producer.flush();
+                                consumer.commitSync();
+                            }
                         }
                     }
+                }
             }
         }
     }
