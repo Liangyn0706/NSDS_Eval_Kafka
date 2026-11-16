@@ -13,8 +13,8 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-// Group number:
-// Group members:
+// Group number: 15
+// Group members: Razia Jafari, Yining Liang, Alessio Antobio
 
 // How many partitions can the topics "temperature" and "humidity" have?
 
